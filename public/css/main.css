@@ -1,0 +1,148 @@
+#main-nav{
+    margin-left: 200px;
+}
+
+.header #main-nav li {
+    padding: .5rem 0 0;
+}
+
+.header #main-nav li:after {
+    border-bottom: 2px solid transparent;
+    content: '';
+    display: block;
+    transform: scaleX(0);
+    transition: transform 250ms ease-in-out;
+}
+
+.header #main-nav li:hover:after {
+    border-bottom-color: orange;
+    transform: scaleX(1);
+}
+/* h1.fromRight:after{ transform-origin:100% 50%; }
+h1.fromLeft:after{  transform-origin:  0% 50%; } */
+
+.header .navbar {
+    padding: 0 1rem;
+}
+
+.header #main-nav li:hover .hide{
+    display: block;
+}
+
+.header #main-nav li .hide{
+    display: none;
+}
+
+.dropdown-menu-right {
+    left: auto;
+    right: 0;
+}
+
+@media (min-width: 1280px) {
+    .container_1360 {
+      max-width: 1360px !important;
+    }
+}
+
+.footer_sec {
+    width: 100%;
+    height: auto;
+    /* position: absolute; */
+    bottom: 0;
+}
+
+.header .navbar-brand {
+    font-weight: bold;
+    -webkit-animation: brand-color-change 1s infinite;
+    -moz-animation: brand-color-change 1s infinite;
+    -o-animation: brand-color-change 1s infinite;
+    -ms-animation: brand-color-change 1s infinite;
+    animation: brand-color-change 1s infinite;
+}
+
+@keyframes brand-color-change {
+    0% {
+        background: -webkit-linear-gradient(yellow, rgb(0, 255, 0));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+    50% {
+        background: -webkit-linear-gradient(rgb(0, 255, 0), orange); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+    100% {
+        background: -webkit-linear-gradient(orange, yellow); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+}
+
+@-webkit-keyframes brand-color-change {
+    0% {
+        background: -webkit-linear-gradient(yellow, rgb(0, 255, 0));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+    50% {
+        background: -webkit-linear-gradient(rgb(0, 255, 0), orange); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+    100% {
+        background: -webkit-linear-gradient(orange, yellow); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+}
+@-moz-keyframes brand-color-change {
+    0% {
+        background: -webkit-linear-gradient(yellow, rgb(0, 255, 0));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+    50% {
+        background: -webkit-linear-gradient(rgb(0, 255, 0), orange); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+    100% {
+        background: -webkit-linear-gradient(orange, yellow); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+}
+@-ms-keyframes brand-color-change {
+    0% {
+        background: -webkit-linear-gradient(yellow, rgb(0, 255, 0));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+    50% {
+        background: -webkit-linear-gradient(rgb(0, 255, 0), orange); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+    100% {
+        background: -webkit-linear-gradient(orange, yellow); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+}
+@-o-keyframes brand-color-change {
+    0% {
+        background: -webkit-linear-gradient(yellow, rgb(0, 255, 0));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+    50% {
+        background: -webkit-linear-gradient(rgb(0, 255, 0), orange); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+    100% {
+        background: -webkit-linear-gradient(orange, yellow); 
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        }
+}
