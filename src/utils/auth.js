@@ -1,4 +1,4 @@
-const AUTH_TOKEN = "MY_AUTH";
+const AUTH_USER = "AUTH_USER";
 const MY_LOCATION = "MY_LOCATION";
 const MY_REGION = "MY_REGION";
 const MY_PROFILE = "MY_PROFILE";
@@ -7,7 +7,7 @@ const MY_COUNTRY = "MY_COUNTRY";
 export function SetCrossData(data) {
   try {
     let crossDataObj = JSON.parse(data);
-    localStorage.setItem(AUTH_TOKEN, crossDataObj[AUTH_TOKEN]);
+    localStorage.setItem(AUTH_USER, crossDataObj[AUTH_USER]);
     localStorage.setItem(MY_PROFILE, crossDataObj[MY_PROFILE]);
     localStorage.setItem(MY_COUNTRY, crossDataObj[MY_COUNTRY]);
     localStorage.setItem(MY_REGION, crossDataObj[MY_REGION]);
@@ -20,7 +20,7 @@ export function SetCrossData(data) {
 
 export function GetAuth() {
   try {
-    const auth = JSON.parse(localStorage.getItem(AUTH_TOKEN));
+    const auth = JSON.parse(localStorage.getItem(AUTH_USER));
     return auth;
   } catch (ex) {
     return null;
@@ -60,7 +60,7 @@ export function GetCountry() {
 }
 
 export function logout() {
-  localStorage.removeItem(AUTH_TOKEN);
+  localStorage.removeItem(AUTH_USER);
   localStorage.removeItem(MY_REGION);
   localStorage.removeItem(MY_LOCATION);
   localStorage.removeItem(MY_COUNTRY);

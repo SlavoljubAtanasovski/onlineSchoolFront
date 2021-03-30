@@ -1,6 +1,4 @@
 import React from "react";
-import {Provider} from 'react-redux'
-import {createStore} from 'redux'
 import Header from '../components/header'
 import Footer from '../components/footer'
 

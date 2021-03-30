@@ -6,16 +6,28 @@ import Avatar, { ConfigProvider } from 'react-avatar';
 import * as AuthTypes from "../store/actions/auth_action";
 import { logOut } from "../store/actions";
 import { useSelector, useDispatch } from 'react-redux';
+import axios from 'axios';
 
-function Header(props) {
-    // alert(JSON.stringify(props.authUser));
-    const [authState, setAuthState] = useState(props.authUser.authState);
+axios.defaults.xsrfCookieName = 'csrftoken'
+axios.defaults.xsrfHeaderName = 'X-CSRFToken'
+
+export default function Header() {
+    const authState = localStorage.authState;
     const history = useHistory();
     const dispatch = useDispatch();
+    var first_name = localStorage.first_name;
+    var last_name = localStorage.last_name;
+    
     const handleLogout = () => {
-        dispatch(logOut());
-        history.push("/");
+        axios.post('/user/signout/')
+        .then( response => { 
+            localStorage.authState = AuthTypes.AUTH_NO_LOGIN;
+            dispatch(logOut());
+            history.push("/");
+        } ) // SUCCESS
+        .catch( response => { alert(response); } ); // ERROR
     }
+
     return(
         <header class="header">
             <nav class="navbar navbar-expand-md bg-primary navbar-dark">
@@ -59,21 +71,21 @@ function Header(props) {
                     </ul>
                     <div class="ml-auto">
                     {
-                        authState === AuthTypes.AUTH_NO_LOGIN || authState ===undefined
+                        authState !== AuthTypes.AUTH_LOGIN || authState ===undefined
                         ? <div>
                             <NavLink to="/login"><button type="button" class="btn btn-primary">Login</button></NavLink>
                             <NavLink to="/register"><button type="button" class="btn btn-primary" style={{marginLeft:10}}>Register</button></NavLink>
                           </div>
                         : <div class="dropdown" id="userAvatar">
                             <a class="btn dropdown-toggle text-white" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <Avatar color={Avatar.getRandomColor('sitebase', ['red', 'green', 'purple'])} name={props.authUser.first_name+" "+props.authUser.last_name} size="40" round style={{fontSize:16}}/>
+                                <Avatar color={Avatar.getRandomColor('sitebase', ['red', 'green', 'purple'])} name={first_name+" "+last_name} size="40" round style={{fontSize:16}}/>
                             </a>                            
                             
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profile-dropdown">
                                 <a class="dropdown-item" href="#">Profile</a>
                                 <a class="dropdown-item" href="#">Connections</a>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="" onClick={handleLogout}>Logout</a>
+                                <a class="dropdown-item" href="#" onClick={handleLogout}>Logout</a>
                             </div>
                             {/* <Avatar className={classes.orange}>N</Avatar> */}
                           </div>  
@@ -84,17 +96,3 @@ function Header(props) {
         </header>
     );
 }
-
-const mapStateToProps = (state) => {
-    return {
-      authUser: state.AuthReducer.authUser,
-    };
-  };
-  const mapDispatchToProps = (dispatch) => {
-    return {
-      onAuth: (obj) => {
-        dispatch({ type: "AUTH_USER", data: obj });
-      },
-    };
-  };
-export default connect(mapStateToProps, mapDispatchToProps)(Header);

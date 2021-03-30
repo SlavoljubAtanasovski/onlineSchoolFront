@@ -72,7 +72,8 @@ export default function RegisterPage() {
   const handleChangeForm = name => event => {
     setValues({ ...values, [name]: event.target.value });
   };
-  const handleSubmit = () => {
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if(values.password !== values.repassword)
     {
         alert('password is different.');
@@ -101,13 +102,17 @@ export default function RegisterPage() {
         email: values.email,
         password: values.password
       };
-      dispatch(setAuthState(data.email, AuthTypes.AUTH_LOGIN_NO_EMAIL_CONFIRM, data.first_name, data.last_name));
-      history.push('/');
-    // axios.post('/user/signup/', data)
-    //   .then( response => { 
-    //       history.push('/');
-    //   } ) // SUCCESS
-    //   .catch( response => { alert(response); } ); // ERROR
+    axios.post('/user/signup/', data)
+      .then( response => { 
+        localStorage.email = data.email;
+        localStorage.password = data.password;
+        localStorage.first_name = data.first_name;
+        localStorage.last_name = data.last_name;
+        localStorage.authState = AuthTypes.AUTH_LOGIN_NO_EMAIL_CONFIRM;
+        dispatch(setAuthState(data.email, AuthTypes.AUTH_LOGIN_NO_EMAIL_CONFIRM, data.first_name, data.last_name));
+        history.push('/auth');
+        } ) // SUCCESS
+      .catch( response => { alert(response); } ); // ERROR
     
   }
   const handleChangeCheckbox = (e) => {
@@ -123,7 +128,7 @@ export default function RegisterPage() {
         <Typography component="h1" variant="h5">
           Sign up
         </Typography>
-        {/* <form className={classes.form} noValidate> */}
+        <form className={classes.form} onSubmit={handleSubmit}>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -201,7 +206,7 @@ export default function RegisterPage() {
             variant="contained"
             color="primary"
             className={classes.submit}
-            onClick={handleSubmit}
+            // onClick={handleSubmit}
           >
             Sign Up
           </Button>
@@ -212,7 +217,7 @@ export default function RegisterPage() {
               </Link>
             </Grid>
           </Grid>
-        {/* </form> */}
+        </form>
       </div>
       <Box mt={5}>
         <Copyright />

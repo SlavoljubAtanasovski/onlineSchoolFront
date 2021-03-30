@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -12,6 +12,11 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
+import axios from 'axios';
+import { useSelector, useDispatch } from 'react-redux';
+import { useHistory } from "react-router-dom";
+import { setAuthState } from "../store/actions";
+import * as AuthTypes from "../store/actions/auth_action";
 
 function Copyright() {
   return (
@@ -48,6 +53,54 @@ const useStyles = makeStyles((theme) => ({
 
 export default function SignIn() {
   const classes = useStyles();
+  const history = useHistory();
+  const dispatch = useDispatch();
+  const [values, setValues] = useState({
+    email: '',
+    password: '',
+  });
+  const [checkedRememberMe, setcheckedRememberMe] = useState(false);
+  const handleChangeForm = name => event => {
+    setValues({ ...values, [name]: event.target.value });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    let data = {
+        email: values.email,
+        password: values.password
+      };
+    axios.post('/user/signin/', data)
+      .then( response => { 
+          localStorage.email = data.email;
+          localStorage.password = data.password;
+          localStorage.first_name = response.data.first_name;
+          localStorage.last_name = response.data.last_name;
+          localStorage.rememberMe = checkedRememberMe;
+          let authState = response.data.is_active ? AuthTypes.AUTH_LOGIN : AuthTypes.AUTH_LOGIN_NO_EMAIL_CONFIRM;
+          localStorage.authState = authState;
+          dispatch(setAuthState(response.data.email, authState, response.data.first_name, response.data.last_name));
+          history.push('/');
+        } ) // SUCCESS
+      .catch( response => { alert(response); } ); // ERROR
+    
+  }
+  const handleChangeCheckbox = (e) => {
+    setcheckedRememberMe(e.target.checked);
+  }
+
+  useEffect(() => {
+    if (localStorage.rememberMe && localStorage.email !== "") {
+        setValues({
+            email: localStorage.email,
+            password: localStorage.password
+        });
+        setcheckedRememberMe(true);
+    }
+
+      return () => {
+      }
+  }, []);
 
   return (
     <Container component="main" maxWidth="xs">
@@ -59,7 +112,7 @@ export default function SignIn() {
         <Typography component="h1" variant="h5">
           Sign in
         </Typography>
-        <form className={classes.form} noValidate>
+        <form className={classes.form} onSubmit={handleSubmit}>
           <TextField
             variant="outlined"
             margin="normal"
@@ -70,6 +123,8 @@ export default function SignIn() {
             name="email"
             autoComplete="email"
             autoFocus
+            onChange={handleChangeForm('email')}
+            value={values.email}
           />
           <TextField
             variant="outlined"
@@ -81,9 +136,11 @@ export default function SignIn() {
             type="password"
             id="password"
             autoComplete="current-password"
+            onChange={handleChangeForm('password')}
+            value={values.password}
           />
           <FormControlLabel
-            control={<Checkbox value="remember" color="primary" />}
+            control={<Checkbox value="remember" color="primary" onChange = {handleChangeCheckbox} checked={checkedRememberMe}/>}
             label="Remember me"
           />
           <Button
@@ -92,6 +149,7 @@ export default function SignIn() {
             variant="contained"
             color="primary"
             className={classes.submit}
+            // onClick={handleSubmit}
           >
             Sign In
           </Button>
