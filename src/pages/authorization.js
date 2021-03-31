@@ -92,6 +92,9 @@ export default function AuthPage(){
           <Typography component="h1" variant="h5">
             Please enter authentication code:
           </Typography>
+          <Typography component="h2" variant="h5">
+            { localStorage.email }
+          </Typography>
           <form className={classes.form} onSubmit={handleSubmit}>
           <Grid item xs={12}>
             <Grid container justify="center" spacing="2">

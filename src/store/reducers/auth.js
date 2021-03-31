@@ -30,10 +30,8 @@ export const AuthReducer = (states = INITIAL_STATE, action) => {
           } || null,
         };
     case LOGOUT:
-      return {
-        ...states,
-        INITIAL_STATE
-      }
+      return INITIAL_STATE;
+      
     default:
       return states;
   }

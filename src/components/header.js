@@ -82,7 +82,7 @@ export default function Header() {
                             </a>                            
                             
                             <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profile-dropdown">
-                                <a class="dropdown-item" href="#">Profile</a>
+                                <NavLink class="dropdown-item" to="/profile">Profile</NavLink>
                                 <a class="dropdown-item" href="#">Connections</a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="#" onClick={handleLogout}>Logout</a>
