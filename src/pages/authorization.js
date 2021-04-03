@@ -55,6 +55,8 @@ export default function AuthPage(){
     const classes = useStyles();
     const history = useHistory();
     const dispatch = useDispatch();
+    if(localStorage.authState !== AuthTypes.AUTH_LOGIN_NO_EMAIL_CONFIRM)
+        history.push('/');
     const [values, setValues] = useState({
         v1: '',
         v2: '',
@@ -83,6 +85,20 @@ export default function AuthPage(){
             } ) // SUCCESS
           .catch( response => { alert(response); } ); // ERROR
         
+    }
+
+    const resendEmail = async (event) => {
+        let data = {
+            first_name: localStorage.first_name,
+            last_name: localStorage.last_name,
+            email: localStorage.email,
+            password: localStorage.password
+          };
+        axios.post('/user/resend_mail/', data)
+        .then( response => {
+            alert('sent email');
+        })
+        .catch( response => { alert(response)})
     }
 
     return(
@@ -115,6 +131,16 @@ export default function AuthPage(){
               Submit
             </Button>
           </form>
+          <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              color="secondary"
+              className={classes.submit}
+              onClick={resendEmail}
+            >
+              Resend authentication email
+            </Button>
         </div>
         <Box mt={8}>
           <Copyright />
