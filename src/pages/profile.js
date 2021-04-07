@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import { useHistory } from "react-router-dom";
 import * as AuthTypes from "../store/actions/auth_action";
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
+import IconButton from "@material-ui/core/IconButton";
+import DeleteIcon from "@material-ui/icons/Delete";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import TextField from "@material-ui/core/TextField";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
@@ -17,22 +19,24 @@ import Paper from "@material-ui/core/Paper";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
+import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import { CountryDropdown, RegionDropdown } from "react-country-region-selector";
 import FormLabel from "@material-ui/core/FormLabel";
-import Autocomplete from "@material-ui/lab/Autocomplete";
 import InputLabel from "@material-ui/core/InputLabel";
+import Autocomplete from "@material-ui/lab/Autocomplete";
 import MenuItem from "@material-ui/core/MenuItem";
 import axios from "axios";
 import { getCookie } from "../utils/csrf";
-import { setAuthState } from "../store/actions";
 import { connect } from "react-redux";
 import { useSelector, useDispatch } from "react-redux";
-import ReactLanguageSelect from "react-languages-select";
-import "react-languages-select/css/react-languages-select.css";
 import "../assets/css/profile.css";
+import ImageUploader from "react-images-upload";
 import { languages } from "../utils/languages";
 import * as langLevels from "../utils/langLevel";
+import Notifications, { notify } from "react-notify-toast";
+import { server_url } from "../utils/setting";
+import LoadingIndicator from "../utils/loading";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -40,6 +44,9 @@ const useStyles = makeStyles((theme) => ({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+  },
+  title: {
+    marginBottom: theme.spacing(1),
   },
   avatar: {
     margin: theme.spacing(1),
@@ -54,42 +61,51 @@ const useStyles = makeStyles((theme) => ({
   },
   Dropdown: {
     backgroundColor: "white",
-    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(1),
     fontSize: "1rem",
   },
   birthdayField: {
     width: "100%",
   },
   LanguageGrid: {
-    marginTop: theme.spacing(1),
+    marginBottom: theme.spacing(1),
   },
 }));
 
 axios.defaults.xsrfCookieName = "csrftoken";
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
-const languageProfiency = [
-  { profiency: "Native" },
-  { profiency: "Advanced" },
-  { profiency: "Intermediate" },
-  { profiency: "Beginner" },
+const languageProficiency = [
+  { level: "Native" },
+  { level: "Advanced" },
+  { level: "Intermediate" },
+  { level: "Beginner" },
 ];
 
-export default function ProfilePage() {
-  const [country, setCountry] = useState("United States");
-  const [region, setRegion] = useState("California");
+function ProfilePage(props) {
+  const [loading, setLoading] = useState(false);
+  const [country, setCountry] = useState(
+    localStorage.country !== "" ? localStorage.country : "United States"
+  );
+  const [region, setRegion] = useState(
+    localStorage.city !== "" ? localStorage.city : "California"
+  );
   const [values, setValues] = useState({
-    birthday: "",
-    gender: "",
-    native_lang: [{ lang: "" }],
-    study_lang: [{ lang: "", level: langLevels.LANG_BEGINNER }],
-    interest: "",
-    profile_photo: "",
-    about_me: "",
+    birthday:
+      localStorage.birthday !== "" ? localStorage.birthday : "2000-01-01",
+    gender: localStorage.gender,
+    native_lang: props.native_lang,
+    study_lang: props.study_lang,
+    interest: localStorage.interest,
+    profile_photo: localStorage.photo_url, //props.origin_photo_url,
+    about_me: localStorage.about_me,
   });
+  const [previewPhoto, setPreviewPhoto] = useState({ file: "", preview: "" });
   const classes = useStyles();
   const history = useHistory();
   const dispatch = useDispatch();
+  const fileUpload = useRef();
+  const bodyElem = useRef();
 
   if (localStorage.authState === AuthTypes.AUTH_NO_LOGIN) history.push("/");
   else if (localStorage.authState === AuthTypes.AUTH_LOGIN_NO_EMAIL_CONFIRM)
@@ -97,19 +113,16 @@ export default function ProfilePage() {
 
   function selectCountry(val) {
     setCountry(val);
+    setRegion("");
   }
 
   function selectRegion(val) {
     setRegion(val);
   }
 
-  function onSelectLanguage(languageCode) {
-    alert(languageCode);
-  }
-
   const addNativeLanguage = () => {
-    if (values.native_lang.length >= 3) {
-      alert("Can't add native language more than 3.");
+    if (values.native_lang.length >= 2) {
+      alert("Can't add native language more than 2.");
       return;
     }
     setValues({
@@ -129,8 +142,8 @@ export default function ProfilePage() {
   };
 
   const addStudyLanguage = () => {
-    if (values.study_lang.length >= 5) {
-      alert("Can't add study language more than 5.");
+    if (values.study_lang.length >= 3) {
+      alert("Can't add study language more than 3.");
       return;
     }
     setValues({
@@ -149,9 +162,172 @@ export default function ProfilePage() {
     });
   };
 
+  const removeProfilePhoto = () => {
+    setValues({
+      ...values,
+      profile_photo: "",
+    });
+  };
+
+  const removePreviewProfilePhoto = () => {
+    setPreviewPhoto({ file: "", preview: "" });
+  };
+
+  const theme = createMuiTheme({
+    typography: {
+      fontFamily: "Oswald", //["Chilanka", "cursive"].join(","),
+    },
+  });
+
+  const onPreviewPhotoDrop = async (event) => {
+    let reader = new FileReader();
+    let file = event.target.files[0];
+    reader.onloadend = () => {
+      setPreviewPhoto({ file: file, preview: reader.result });
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleChangeForm = (name) => (event) => {
+    setValues({ ...values, [name]: event.target.value });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (country === "") {
+      notify.show("Please select country.", "error", 2000);
+      // bodyElem.current.scrollTop = 100;
+      return;
+    }
+    if (region === "") {
+      notify.show("Please select region.", "error", 2000);
+      return;
+    }
+    if (values.gender === "") {
+      notify.show("Please select gender.", "error", 2000);
+      return;
+    }
+    if (values.about_me === "") {
+      notify.show("Please enter text about me.", "error", 2000);
+      return;
+    }
+    if (values.native_lang[0].lang === "") {
+      notify.show("Please select your first native language.", "error", 2000);
+      return;
+    }
+    if (values.native_lang.length > 1 && values.native_lang[1].lang === "") {
+      notify.show("Please select your second native language.", "error", 2000);
+      return;
+    }
+    if (values.study_lang[0].lang === "") {
+      notify.show("Please select your first study language.", "error", 2000);
+      return;
+    }
+    if (values.study_lang[0].level === "") {
+      notify.show(
+        "Please select your level of your first study language.",
+        "error",
+        2000
+      );
+      return;
+    }
+    if (values.study_lang.length > 1 && values.study_lang[1].lang === "") {
+      notify.show(
+        "Please select your second study language or delete it if you don't need.",
+        "error",
+        2000
+      );
+      return;
+    }
+    if (values.study_lang.length > 1 && values.study_lang[1].level === "") {
+      notify.show(
+        "Please select your level of your second study language.",
+        "error",
+        2000
+      );
+      return;
+    }
+    if (values.study_lang.length > 2 && values.study_lang[2].lang === "") {
+      notify.show(
+        "Please select your third study language or delete it if you don't need.",
+        "error",
+        2000
+      );
+      return;
+    }
+    if (values.study_lang.length > 2 && values.study_lang[2].level === "") {
+      notify.show(
+        "Please select your level of your third study language.",
+        "error",
+        2000
+      );
+      return;
+    }
+    let form_data = new FormData();
+    if (previewPhoto.file === "") {
+    } else
+      form_data.append("photo_url", previewPhoto.file, previewPhoto.file.name);
+    form_data.append("email", localStorage.email);
+    form_data.append("country", country);
+    form_data.append("city", region);
+    form_data.append("birthday", values.birthday);
+    form_data.append("sex", values.gender);
+    form_data.append("interest", values.interest);
+    form_data.append("about_me", values.about_me);
+    form_data.append("native_lang", JSON.stringify(values.native_lang));
+    form_data.append("study_lang", JSON.stringify(values.study_lang));
+    setLoading(true);
+    axios
+      .post("/school/profile/set/", form_data, {
+        headers: {
+          "content-type": "multipart/form-data",
+        },
+      })
+      .then((response) => {
+        notify.show("You profile saved successfully!", "success", 2000);
+
+        localStorage.photo_url = response.data.user_photo_url;
+        localStorage.interest = values.interest;
+        localStorage.about_me = values.about_me;
+        localStorage.gender = values.gender;
+        localStorage.birthday = values.birthday;
+        localStorage.native_lang1 = values.native_lang[0].lang;
+        localStorage.native_lang2 =
+          values.native_lang.length > 1 ? values.native_lang[1].lang : "";
+        localStorage.study_lang1 = values.study_lang[0].lang;
+        localStorage.study_lang2 =
+          values.study_lang.length > 1 ? values.study_lang[1].lang : "";
+        localStorage.study_lang3 =
+          values.study_lang.length > 2 ? values.study_lang[2].lang : "";
+        localStorage.study_lang_level1 = values.study_lang[0].level;
+        localStorage.study_lang_level2 =
+          values.study_lang.length > 1 ? values.study_lang[1].level : "";
+        localStorage.study_lang_level3 =
+          values.study_lang.length > 2 ? values.study_lang[2].level : "";
+        setPreviewPhoto({ file: "", preview: "" });
+        setValues({ ...values, profile_photo: response.data.user_photo_url });
+        // setTimeout(() => setLoading(false), 5000);
+        setLoading(false);
+      })
+      .catch((response) => {
+        notify.show("Sorry. Unexpected error occured!", "error", 2000);
+        setLoading(false);
+      });
+  };
+
+  const browseFile = (event) => {
+    event.preventDefault();
+    fileUpload.current.click();
+  };
+
+  useEffect(() => {}, []);
+
   return (
-    <div>
+    <div ref={bodyElem}>
       <Header></Header>
+      <Notifications />
+      {loading && <LoadingIndicator />}
       <Box style={{ backgroundColor: "#f2f2f2" }}>
         <Box py={8}>
           <Container component="main" maxWidth="md">
@@ -161,55 +337,54 @@ export default function ProfilePage() {
                 className={classes.paper}
                 style={{ backgroundColor: "white" }}
               >
-                <Typography component="h1" variant="h5">
-                  Your profile
-                </Typography>
+                <ThemeProvider theme={theme}>
+                  <Typography variant="h3" gutterBottom>
+                    My profile
+                  </Typography>
+                </ThemeProvider>
                 <Box px={3}>
                   <form className={classes.form}>
                     <Grid container spacing={2}>
                       <Grid item xs={6}>
-                        <div> Email</div>
+                        <div className={classes.title}> Email</div>
                         <TextField
                           variant="outlined"
                           disabled
                           fullWidth
                           id="email"
-                          label="Email Address"
                           name="email"
                           size="small"
                           autoComplete="email"
+                          value={localStorage.email}
                         />
                       </Grid>
                       <Grid item xs={6}></Grid>
                       <Grid item xs={12} sm={6}>
-                        <div>First name</div>
+                        <div className={classes.title}>First name</div>
                         <TextField
-                          autoComplete="fname"
                           name="first_name"
                           variant="outlined"
                           disabled
                           fullWidth
                           id="firstName"
-                          label="First Name"
                           size="small"
-                          autoFocus
+                          value={localStorage.first_name}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <div>Last name</div>
+                        <div className={classes.title}>Last name</div>
                         <TextField
                           variant="outlined"
                           disabled
                           fullWidth
                           id="lastName"
-                          label="Last Name"
                           name="last_name"
                           size="small"
-                          autoComplete="lname"
+                          value={localStorage.last_name}
                         />
                       </Grid>
                       <Grid item xs={6}>
-                        <div>Country*</div>
+                        <div className={classes.title}>Country*</div>
                         <CountryDropdown
                           className={classes.Dropdown}
                           value={country}
@@ -217,7 +392,7 @@ export default function ProfilePage() {
                         />
                       </Grid>
                       <Grid item xs={6}>
-                        <div>Region*</div>
+                        <div className={classes.title}>Region*</div>
                         <RegionDropdown
                           className={classes.Dropdown}
                           country={country}
@@ -226,49 +401,92 @@ export default function ProfilePage() {
                         />
                       </Grid>
                       <Grid item xs={12}>
-                        <div>Profile Picture</div>
-                        <img
-                          alt="PofilePhoto"
-                          src="assets/img/profile/1.jpg"
-                          width="100"
-                          height="100"
-                        />
-                        <div
-                          class="attachFiles-dropArea only-upload d-none"
-                          id="attachFiles-dropArea-2"
-                        >
-                          <div class="attachFiles-normalOptions">
-                            <a
-                              class="call-to-action attachFiles-pick _attachFiles-link"
-                              href="#"
-                              id="attachFiles-pick-2"
+                        <div className={classes.title}>Profile Picture</div>
+                        {values.profile_photo !== "" ? (
+                          <div>
+                            <img
+                              alt="PofilePhoto"
+                              src={server_url + values.profile_photo}
+                              width="100"
+                              height="100"
+                            />
+                            <Button
+                              id="removePhoto"
+                              variant="contained"
+                              style={{ marginLeft: 50, width: 70 }}
+                              onClick={() => removeProfilePhoto()}
                             >
-                              Browse
-                            </a>{" "}
-                            to add attachments
+                              Delete
+                            </Button>
                           </div>
-                        </div>
+                        ) : previewPhoto.preview !== "" ? (
+                          <div>
+                            <img
+                              src={previewPhoto.preview}
+                              width="100"
+                              height="100"
+                              alt="Preview"
+                            />
+                            <Button
+                              id="removePreviewPhoto"
+                              variant="contained"
+                              style={{ marginLeft: 50, width: 70 }}
+                              onClick={() => removePreviewProfilePhoto()}
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        ) : (
+                          <div
+                            class="attachFiles-dropArea only-upload"
+                            id="attachFiles-dropArea-2"
+                            style={{ textAlign: "center", height: 100 }}
+                          >
+                            <div class="attachFiles-normalOptions">
+                              <input
+                                type="file"
+                                className="hide"
+                                ref={fileUpload}
+                                name="filename"
+                                onChange={(e) => onPreviewPhotoDrop(e)}
+                              ></input>
+                              <a
+                                href="#"
+                                class="call-to-action attachFiles-pick _attachFiles-link"
+                                id="attachFiles-pick-2"
+                                onClick={browseFile}
+                              >
+                                Browse
+                              </a>{" "}
+                              to add picture
+                            </div>
+                          </div>
+                        )}
                       </Grid>
                       <Grid item xs={6}>
-                        <div>Birthday*</div>
+                        <div className={classes.title}>Birthday*</div>
                         <TextField
                           id="date"
                           type="date"
-                          defaultValue="2000-05-24"
+                          defaultValue="2000-01-01"
                           variant="outlined"
                           size="small"
                           className={classes.birthdayField}
+                          name="birthday"
+                          value={values.birthday}
                           InputLabelProps={{
                             shrink: true,
                           }}
+                          onChange={handleChangeForm("birthday")}
                         />
                       </Grid>
                       <Grid item xs={6}>
-                        <div>Gender*</div>
+                        <div className={classes.title}>Gender*</div>
                         <Autocomplete
                           id="combo-box-gender"
-                          options={[{ gender: "Male" }, { gender: "Female" }]}
-                          getOptionLabel={(option) => option.gender}
+                          value={values.gender}
+                          options={["Male", "Female"]}
+                          getOptionLabel={(option) => option}
                           style={{ width: "100%" }}
                           size="small"
                           renderInput={(params) => (
@@ -279,44 +497,48 @@ export default function ProfilePage() {
                             />
                           )}
                           onChange={(event, value) =>
-                            setValues([...values, { gender: value }])
+                            setValues({ ...values, gender: value })
                           }
                         />
                       </Grid>
                       <Grid item xs={12}>
-                        <div>Interest</div>
+                        <div className={classes.title}>Interest</div>
                         <TextField
                           variant="outlined"
                           fullWidth
                           id="interest"
-                          name="Interest"
+                          name="interest"
                           size="small"
+                          value={values.interest}
                           autoComplete="interest"
                           inputProps={{ maxLength: 200 }}
+                          onChange={handleChangeForm("interest")}
                         />
                       </Grid>
                       <Grid item xs={12}>
-                        <div>About Me*</div>
+                        <div className={classes.title}>About Me*</div>
                         <TextField
                           variant="outlined"
                           fullWidth
                           multiline
                           rows={10}
                           id="about_me"
-                          name="AboutMe"
+                          name="about_me"
+                          value={values.about_me}
                           autoComplete="AboutMe"
                           inputProps={{ maxLength: 2000 }}
+                          onChange={handleChangeForm("about_me")}
                         />
                       </Grid>
                       <Grid item xs={12}>
-                        <div>Native Language*</div>
+                        <div className={classes.title}>Native Language*</div>
                         <Grid container className={classes.LanguageGrid}>
-                          <Grid item xs={6}>
+                          <Grid item xs={4}>
                             <Autocomplete
                               options={languages}
                               getOptionLabel={(option) => option.lang}
-                              style={{ width: 300 }}
                               size="small"
+                              value={values.native_lang[0]}
                               renderInput={(params) => (
                                 <TextField
                                   {...params}
@@ -338,10 +560,11 @@ export default function ProfilePage() {
                               }
                             />
                           </Grid>
-                          <Grid item xs={6}>
+                          <Grid item xs={4}>
                             <Button
                               id="addNativeLang"
                               variant="contained"
+                              style={{ marginLeft: 50, width: 70 }}
                               onClick={() => addNativeLanguage()}
                             >
                               Add
@@ -351,13 +574,16 @@ export default function ProfilePage() {
                         {values.native_lang
                           .slice(1)
                           .map((native_lang, index) => (
-                            <Grid container className={classes.LanguageGrid}>
-                              <Grid item xs={6}>
+                            <Grid
+                              container
+                              key={index}
+                              className={classes.LanguageGrid}
+                            >
+                              <Grid item xs={4}>
                                 <Autocomplete
                                   value={native_lang}
                                   options={languages}
                                   getOptionLabel={(option) => option.lang}
-                                  style={{ width: 300 }}
                                   size="small"
                                   renderInput={(params) => (
                                     <TextField
@@ -384,9 +610,10 @@ export default function ProfilePage() {
                                   }
                                 />
                               </Grid>
-                              <Grid item xs={6}>
+                              <Grid item xs={4}>
                                 <Button
                                   variant="contained"
+                                  style={{ marginLeft: 50, width: 70 }}
                                   onClick={() =>
                                     deleteNativeLanguage(index + 1)
                                   }
@@ -398,14 +625,14 @@ export default function ProfilePage() {
                           ))}
                       </Grid>
                       <Grid item xs={12}>
-                        <div>Study Language</div>
+                        <div className={classes.title}>Study Language</div>
                         <Grid container className={classes.LanguageGrid}>
-                          <Grid item xs={6}>
+                          <Grid item xs={4}>
                             <Autocomplete
                               options={languages}
                               getOptionLabel={(option) => option.lang}
-                              style={{ width: 300 }}
                               size="small"
+                              value={values.study_lang[0]}
                               renderInput={(params) => (
                                 <TextField
                                   {...params}
@@ -427,10 +654,39 @@ export default function ProfilePage() {
                               }
                             />
                           </Grid>
-                          <Grid item xs={6}>
+                          <Grid item xs={4}>
+                            <Autocomplete
+                              options={languageProficiency}
+                              getOptionLabel={(option) => option.level}
+                              size="small"
+                              value={values.study_lang[0]}
+                              style={{ marginLeft: 50 }}
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  label=""
+                                  variant="outlined"
+                                />
+                              )}
+                              onChange={(event, value) =>
+                                setValues({
+                                  ...values,
+                                  study_lang: [
+                                    {
+                                      ...values.study_lang[0],
+                                      level: value != null ? value.level : "",
+                                    },
+                                    ...values.study_lang.slice(1),
+                                  ],
+                                })
+                              }
+                            />
+                          </Grid>
+                          <Grid item xs={4}>
                             <Button
                               id="addStudyLang"
                               variant="contained"
+                              style={{ marginLeft: 50, width: 70 }}
                               onClick={() => addStudyLanguage()}
                             >
                               Add
@@ -438,13 +694,16 @@ export default function ProfilePage() {
                           </Grid>
                         </Grid>
                         {values.study_lang.slice(1).map((study_lang, index) => (
-                          <Grid container className={classes.LanguageGrid}>
-                            <Grid item xs={6}>
+                          <Grid
+                            container
+                            key={index}
+                            className={classes.LanguageGrid}
+                          >
+                            <Grid item xs={4}>
                               <Autocomplete
                                 value={study_lang}
                                 options={languages}
                                 getOptionLabel={(option) => option.lang}
-                                style={{ width: 300 }}
                                 size="small"
                                 renderInput={(params) => (
                                   <TextField
@@ -468,13 +727,50 @@ export default function ProfilePage() {
                                 }
                               />
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid item xs={4}>
+                              <Autocomplete
+                                value={study_lang}
+                                options={languageProficiency}
+                                getOptionLabel={(option) => option.level}
+                                size="small"
+                                style={{ marginLeft: 50 }}
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    label=""
+                                    variant="outlined"
+                                  />
+                                )}
+                                onChange={(event, value) =>
+                                  setValues({
+                                    ...values,
+                                    study_lang: [
+                                      ...values.study_lang.slice(0, index + 1),
+                                      {
+                                        ...values.study_lang[index + 1],
+                                        level: value != null ? value.level : "",
+                                      },
+                                      ...values.study_lang.slice(index + 2),
+                                    ],
+                                  })
+                                }
+                              />
+                            </Grid>
+                            <Grid item xs={4}>
                               <Button
                                 variant="contained"
+                                style={{ marginLeft: 50, width: 70 }}
                                 onClick={() => deleteStudyLanguage(index + 1)}
                               >
                                 Delete
                               </Button>
+                              {/* <IconButton
+                                variant="contained"
+                                aria-label="delete"
+                                onClick={() => deleteStudyLanguage(index + 1)}
+                              >
+                                <DeleteIcon fontSize="large" />
+                              </IconButton> */}
                             </Grid>
                           </Grid>
                         ))}
@@ -486,7 +782,7 @@ export default function ProfilePage() {
                       variant="contained"
                       color="primary"
                       className={classes.submit}
-                      // onClick={handleSubmit}
+                      onClick={handleSubmit}
                       style={{ marginTop: 48, marginBottom: 32 }}
                     >
                       Save
@@ -502,3 +798,33 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+const getNativeLangs = () => {
+  var native_lang = [{ lang: localStorage.native_lang1 }];
+  if (localStorage.native_lang2 !== "")
+    native_lang.push({ lang: localStorage.native_lang2 });
+  return native_lang;
+};
+const getStudyLangs = () => {
+  var study_lang = [
+    { lang: localStorage.study_lang1, level: localStorage.study_lang_level1 },
+  ];
+  if (localStorage.study_lang2 !== "")
+    study_lang.push({
+      lang: localStorage.study_lang2,
+      level: localStorage.study_lang_level2,
+    });
+  if (localStorage.study_lang3 !== "")
+    study_lang.push({
+      lang: localStorage.study_lang3,
+      level: localStorage.study_lang_level3,
+    });
+  return study_lang;
+};
+const mapStateToProps = (state) => ({
+  origin_photo_url: localStorage.photo_url, //state.ProfileReducer.profile_photo_url,
+  native_lang: getNativeLangs(),
+  study_lang: getStudyLangs(),
+});
+
+export default connect(mapStateToProps, null)(ProfilePage);

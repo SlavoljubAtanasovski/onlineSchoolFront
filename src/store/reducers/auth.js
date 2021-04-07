@@ -16,22 +16,23 @@ export const AuthReducer = (states = INITIAL_STATE, action) => {
           email: action.email,
           authState: action.authState,
           first_name: action.first_name,
-          last_name: action.last_name
+          last_name: action.last_name,
         },
-      }
+      };
     case GET_AUTH_USER:
-        return {
-          ...states,
-          authUser: {
+      return {
+        ...states,
+        authUser:
+          {
             email: localStorage.email,
             first_name: localStorage.first_name,
             last_name: localStorage.last_name,
-            authState: localStorage.authState
+            authState: localStorage.authState,
           } || null,
-        };
+      };
     case LOGOUT:
       return INITIAL_STATE;
-      
+
     default:
       return states;
   }
