@@ -3,40 +3,27 @@ import Header from "../components/header";
 import Footer from "../components/footer";
 import { useHistory } from "react-router-dom";
 import * as AuthTypes from "../store/actions/auth_action";
-import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
-import IconButton from "@material-ui/core/IconButton";
-import DeleteIcon from "@material-ui/icons/Delete";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import TextField from "@material-ui/core/TextField";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
-import Checkbox from "@material-ui/core/Checkbox";
-import Link from "@material-ui/core/Link";
 import Grid from "@material-ui/core/Grid";
 import Box from "@material-ui/core/Box";
 import Paper from "@material-ui/core/Paper";
-import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import { CountryDropdown, RegionDropdown } from "react-country-region-selector";
-import FormLabel from "@material-ui/core/FormLabel";
-import InputLabel from "@material-ui/core/InputLabel";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import MenuItem from "@material-ui/core/MenuItem";
 import axios from "axios";
-import { getCookie } from "../utils/csrf";
 import { connect } from "react-redux";
-import { useSelector, useDispatch } from "react-redux";
-import "../assets/css/profile.css";
-import ImageUploader from "react-images-upload";
 import { languages } from "../utils/languages";
-import * as langLevels from "../utils/langLevel";
+import { languageProficiency } from "../utils/langLevel";
 import Notifications, { notify } from "react-notify-toast";
 import { server_url } from "../utils/setting";
 import LoadingIndicator from "../utils/loading";
+import { StylesProvider } from "@material-ui/core/styles";
+import "../assets/css/profile.css";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -75,13 +62,6 @@ const useStyles = makeStyles((theme) => ({
 axios.defaults.xsrfCookieName = "csrftoken";
 axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
-const languageProficiency = [
-  { level: "Native" },
-  { level: "Advanced" },
-  { level: "Intermediate" },
-  { level: "Beginner" },
-];
-
 function ProfilePage(props) {
   const [loading, setLoading] = useState(false);
   const [country, setCountry] = useState(
@@ -103,7 +83,6 @@ function ProfilePage(props) {
   const [previewPhoto, setPreviewPhoto] = useState({ file: "", preview: "" });
   const classes = useStyles();
   const history = useHistory();
-  const dispatch = useDispatch();
   const fileUpload = useRef();
   const bodyElem = useRef();
 
@@ -122,7 +101,7 @@ function ProfilePage(props) {
 
   const addNativeLanguage = () => {
     if (values.native_lang.length >= 2) {
-      alert("Can't add native language more than 2.");
+      notify.show("Can't add native language more than 2.", "error", 2000);
       return;
     }
     setValues({
@@ -143,7 +122,7 @@ function ProfilePage(props) {
 
   const addStudyLanguage = () => {
     if (values.study_lang.length >= 3) {
-      alert("Can't add study language more than 3.");
+      notify.show("Can't add study language more than 3.", "error", 2000);
       return;
     }
     setValues({
@@ -285,7 +264,7 @@ function ProfilePage(props) {
         },
       })
       .then((response) => {
-        notify.show("You profile saved successfully!", "success", 2000);
+        notify.show("Your profile saved successfully!", "success", 2000);
 
         localStorage.photo_url = response.data.user_photo_url;
         localStorage.interest = values.interest;
@@ -331,380 +310,313 @@ function ProfilePage(props) {
       <Box style={{ backgroundColor: "#f2f2f2" }}>
         <Box py={8}>
           <Container component="main" maxWidth="md">
-            <CssBaseline />
-            <Paper elevation={2}>
-              <div
-                className={classes.paper}
-                style={{ backgroundColor: "white" }}
-              >
-                <ThemeProvider theme={theme}>
-                  <Typography variant="h3" gutterBottom>
-                    My profile
-                  </Typography>
-                </ThemeProvider>
-                <Box px={3}>
-                  <form className={classes.form}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <div className={classes.title}> Email</div>
-                        <TextField
-                          variant="outlined"
-                          disabled
-                          fullWidth
-                          id="email"
-                          name="email"
-                          size="small"
-                          autoComplete="email"
-                          value={localStorage.email}
-                        />
-                      </Grid>
-                      <Grid item xs={6}></Grid>
-                      <Grid item xs={12} sm={6}>
-                        <div className={classes.title}>First name</div>
-                        <TextField
-                          name="first_name"
-                          variant="outlined"
-                          disabled
-                          fullWidth
-                          id="firstName"
-                          size="small"
-                          value={localStorage.first_name}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <div className={classes.title}>Last name</div>
-                        <TextField
-                          variant="outlined"
-                          disabled
-                          fullWidth
-                          id="lastName"
-                          name="last_name"
-                          size="small"
-                          value={localStorage.last_name}
-                        />
-                      </Grid>
-                      <Grid item xs={6}>
-                        <div className={classes.title}>Country*</div>
-                        <CountryDropdown
-                          className={classes.Dropdown}
-                          value={country}
-                          onChange={(val) => selectCountry(val)}
-                        />
-                      </Grid>
-                      <Grid item xs={6}>
-                        <div className={classes.title}>Region*</div>
-                        <RegionDropdown
-                          className={classes.Dropdown}
-                          country={country}
-                          value={region}
-                          onChange={(val) => selectRegion(val)}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <div className={classes.title}>Profile Picture</div>
-                        {values.profile_photo !== "" ? (
-                          <div>
-                            <img
-                              alt="PofilePhoto"
-                              src={server_url + values.profile_photo}
-                              width="100"
-                              height="100"
-                            />
-                            <Button
-                              id="removePhoto"
-                              variant="contained"
-                              style={{ marginLeft: 50, width: 70 }}
-                              onClick={() => removeProfilePhoto()}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        ) : previewPhoto.preview !== "" ? (
-                          <div>
-                            <img
-                              src={previewPhoto.preview}
-                              width="100"
-                              height="100"
-                              alt="Preview"
-                            />
-                            <Button
-                              id="removePreviewPhoto"
-                              variant="contained"
-                              style={{ marginLeft: 50, width: 70 }}
-                              onClick={() => removePreviewProfilePhoto()}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        ) : (
-                          <div
-                            class="attachFiles-dropArea only-upload"
-                            id="attachFiles-dropArea-2"
-                            style={{ textAlign: "center", height: 100 }}
-                          >
-                            <div class="attachFiles-normalOptions">
-                              <input
-                                type="file"
-                                className="hide"
-                                ref={fileUpload}
-                                name="filename"
-                                onChange={(e) => onPreviewPhotoDrop(e)}
-                              ></input>
-                              <a
-                                href="#"
-                                class="call-to-action attachFiles-pick _attachFiles-link"
-                                id="attachFiles-pick-2"
-                                onClick={browseFile}
+            <StylesProvider injectFirst>
+              <CssBaseline />
+              <Paper elevation={2}>
+                <div
+                  className={classes.paper}
+                  style={{ backgroundColor: "white" }}
+                >
+                  <ThemeProvider theme={theme}>
+                    <Typography variant="h3" gutterBottom>
+                      My profile
+                    </Typography>
+                  </ThemeProvider>
+                  <Box px={3}>
+                    <form className={classes.form}>
+                      <Grid container spacing={2}>
+                        <Grid item xs={6}>
+                          <div className={classes.title}> Email</div>
+                          <TextField
+                            variant="outlined"
+                            disabled
+                            fullWidth
+                            id="email"
+                            name="email"
+                            size="small"
+                            autoComplete="email"
+                            value={localStorage.email}
+                          />
+                        </Grid>
+                        <Grid item xs={6}></Grid>
+                        <Grid item xs={12} sm={6}>
+                          <div className={classes.title}>First name</div>
+                          <TextField
+                            name="first_name"
+                            variant="outlined"
+                            disabled
+                            fullWidth
+                            id="firstName"
+                            size="small"
+                            value={localStorage.first_name}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <div className={classes.title}>Last name</div>
+                          <TextField
+                            variant="outlined"
+                            disabled
+                            fullWidth
+                            id="lastName"
+                            name="last_name"
+                            size="small"
+                            value={localStorage.last_name}
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <div className={classes.title}>Country*</div>
+                          <CountryDropdown
+                            className={classes.Dropdown}
+                            value={country}
+                            onChange={(val) => selectCountry(val)}
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <div className={classes.title}>Region*</div>
+                          <RegionDropdown
+                            className={classes.Dropdown}
+                            country={country}
+                            value={region}
+                            onChange={(val) => selectRegion(val)}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <div className={classes.title}>Profile Picture</div>
+                          {values.profile_photo !== "" ? (
+                            <div>
+                              <img
+                                alt="PofilePhoto"
+                                src={server_url + values.profile_photo}
+                                width="100"
+                                height="100"
+                              />
+                              <Button
+                                id="removePhoto"
+                                variant="contained"
+                                style={{ marginLeft: 50, width: 70 }}
+                                onClick={() => removeProfilePhoto()}
                               >
-                                Browse
-                              </a>{" "}
-                              to add picture
+                                Delete
+                              </Button>
                             </div>
-                          </div>
-                        )}
-                      </Grid>
-                      <Grid item xs={6}>
-                        <div className={classes.title}>Birthday*</div>
-                        <TextField
-                          id="date"
-                          type="date"
-                          defaultValue="2000-01-01"
-                          variant="outlined"
-                          size="small"
-                          className={classes.birthdayField}
-                          name="birthday"
-                          value={values.birthday}
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          onChange={handleChangeForm("birthday")}
-                        />
-                      </Grid>
-                      <Grid item xs={6}>
-                        <div className={classes.title}>Gender*</div>
-                        <Autocomplete
-                          id="combo-box-gender"
-                          value={values.gender}
-                          options={["Male", "Female"]}
-                          getOptionLabel={(option) => option}
-                          style={{ width: "100%" }}
-                          size="small"
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label=""
-                              variant="outlined"
-                            />
-                          )}
-                          onChange={(event, value) =>
-                            setValues({ ...values, gender: value })
-                          }
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <div className={classes.title}>Interest</div>
-                        <TextField
-                          variant="outlined"
-                          fullWidth
-                          id="interest"
-                          name="interest"
-                          size="small"
-                          value={values.interest}
-                          autoComplete="interest"
-                          inputProps={{ maxLength: 200 }}
-                          onChange={handleChangeForm("interest")}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <div className={classes.title}>About Me*</div>
-                        <TextField
-                          variant="outlined"
-                          fullWidth
-                          multiline
-                          rows={10}
-                          id="about_me"
-                          name="about_me"
-                          value={values.about_me}
-                          autoComplete="AboutMe"
-                          inputProps={{ maxLength: 2000 }}
-                          onChange={handleChangeForm("about_me")}
-                        />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <div className={classes.title}>Native Language*</div>
-                        <Grid container className={classes.LanguageGrid}>
-                          <Grid item xs={4}>
-                            <Autocomplete
-                              options={languages}
-                              getOptionLabel={(option) => option.lang}
-                              size="small"
-                              value={values.native_lang[0]}
-                              renderInput={(params) => (
-                                <TextField
-                                  {...params}
-                                  label=""
-                                  variant="outlined"
-                                />
-                              )}
-                              onChange={(event, value) =>
-                                setValues({
-                                  ...values,
-                                  native_lang: [
-                                    {
-                                      ...values.native_lang[0],
-                                      lang: value != null ? value.lang : "",
-                                    },
-                                    ...values.native_lang.slice(1),
-                                  ],
-                                })
-                              }
-                            />
-                          </Grid>
-                          <Grid item xs={4}>
-                            <Button
-                              id="addNativeLang"
-                              variant="contained"
-                              style={{ marginLeft: 50, width: 70 }}
-                              onClick={() => addNativeLanguage()}
+                          ) : previewPhoto.preview !== "" ? (
+                            <div>
+                              <img
+                                src={previewPhoto.preview}
+                                width="100"
+                                height="100"
+                                alt="Preview"
+                              />
+                              <Button
+                                id="removePreviewPhoto"
+                                variant="contained"
+                                style={{ marginLeft: 50, width: 70 }}
+                                onClick={() => removePreviewProfilePhoto()}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          ) : (
+                            <div
+                              class="attachFiles-dropArea only-upload"
+                              id="attachFiles-dropArea-2"
+                              style={{ textAlign: "center", height: 100 }}
                             >
-                              Add
-                            </Button>
-                          </Grid>
-                        </Grid>
-                        {values.native_lang
-                          .slice(1)
-                          .map((native_lang, index) => (
-                            <Grid
-                              container
-                              key={index}
-                              className={classes.LanguageGrid}
-                            >
-                              <Grid item xs={4}>
-                                <Autocomplete
-                                  value={native_lang}
-                                  options={languages}
-                                  getOptionLabel={(option) => option.lang}
-                                  size="small"
-                                  renderInput={(params) => (
-                                    <TextField
-                                      {...params}
-                                      label=""
-                                      variant="outlined"
-                                    />
-                                  )}
-                                  onChange={(event, value) =>
-                                    setValues({
-                                      ...values,
-                                      native_lang: [
-                                        ...values.native_lang.slice(
-                                          0,
-                                          index + 1
-                                        ),
-                                        {
-                                          ...values.native_lang[index + 1],
-                                          lang: value != null ? value.lang : "",
-                                        },
-                                        ...values.native_lang.slice(index + 2),
-                                      ],
-                                    })
-                                  }
-                                />
-                              </Grid>
-                              <Grid item xs={4}>
-                                <Button
-                                  variant="contained"
-                                  style={{ marginLeft: 50, width: 70 }}
-                                  onClick={() =>
-                                    deleteNativeLanguage(index + 1)
-                                  }
+                              <div class="attachFiles-normalOptions">
+                                <input
+                                  type="file"
+                                  className="hide"
+                                  ref={fileUpload}
+                                  name="filename"
+                                  onChange={(e) => onPreviewPhotoDrop(e)}
+                                ></input>
+                                <a
+                                  href="/#"
+                                  class="call-to-action attachFiles-pick _attachFiles-link"
+                                  id="attachFiles-pick-2"
+                                  onClick={browseFile}
                                 >
-                                  Delete
-                                </Button>
-                              </Grid>
-                            </Grid>
-                          ))}
-                      </Grid>
-                      <Grid item xs={12}>
-                        <div className={classes.title}>Study Language</div>
-                        <Grid container className={classes.LanguageGrid}>
-                          <Grid item xs={4}>
-                            <Autocomplete
-                              options={languages}
-                              getOptionLabel={(option) => option.lang}
-                              size="small"
-                              value={values.study_lang[0]}
-                              renderInput={(params) => (
-                                <TextField
-                                  {...params}
-                                  label=""
-                                  variant="outlined"
-                                />
-                              )}
-                              onChange={(event, value) =>
-                                setValues({
-                                  ...values,
-                                  study_lang: [
-                                    {
-                                      ...values.study_lang[0],
-                                      lang: value != null ? value.lang : "",
-                                    },
-                                    ...values.study_lang.slice(1),
-                                  ],
-                                })
-                              }
-                            />
-                          </Grid>
-                          <Grid item xs={4}>
-                            <Autocomplete
-                              options={languageProficiency}
-                              getOptionLabel={(option) => option.level}
-                              size="small"
-                              value={values.study_lang[0]}
-                              style={{ marginLeft: 50 }}
-                              renderInput={(params) => (
-                                <TextField
-                                  {...params}
-                                  label=""
-                                  variant="outlined"
-                                />
-                              )}
-                              onChange={(event, value) =>
-                                setValues({
-                                  ...values,
-                                  study_lang: [
-                                    {
-                                      ...values.study_lang[0],
-                                      level: value != null ? value.level : "",
-                                    },
-                                    ...values.study_lang.slice(1),
-                                  ],
-                                })
-                              }
-                            />
-                          </Grid>
-                          <Grid item xs={4}>
-                            <Button
-                              id="addStudyLang"
-                              variant="contained"
-                              style={{ marginLeft: 50, width: 70 }}
-                              onClick={() => addStudyLanguage()}
-                            >
-                              Add
-                            </Button>
-                          </Grid>
+                                  Browse
+                                </a>{" "}
+                                to add picture
+                              </div>
+                            </div>
+                          )}
                         </Grid>
-                        {values.study_lang.slice(1).map((study_lang, index) => (
-                          <Grid
-                            container
-                            key={index}
-                            className={classes.LanguageGrid}
-                          >
-                            <Grid item xs={4}>
+                        <Grid item xs={6}>
+                          <div className={classes.title}>Birthday*</div>
+                          <TextField
+                            id="date"
+                            type="date"
+                            defaultValue="2000-01-01"
+                            variant="outlined"
+                            size="small"
+                            className={classes.birthdayField}
+                            name="birthday"
+                            value={values.birthday}
+                            InputLabelProps={{
+                              shrink: true,
+                            }}
+                            onChange={handleChangeForm("birthday")}
+                          />
+                        </Grid>
+                        <Grid item xs={6}>
+                          <div className={classes.title}>Gender*</div>
+                          <Autocomplete
+                            id="combo-box-gender"
+                            value={values.gender}
+                            options={["Male", "Female"]}
+                            getOptionLabel={(option) => option}
+                            style={{ width: "100%" }}
+                            size="small"
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                label=""
+                                variant="outlined"
+                              />
+                            )}
+                            onChange={(event, value) =>
+                              setValues({ ...values, gender: value })
+                            }
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <div className={classes.title}>Interest</div>
+                          <TextField
+                            variant="outlined"
+                            fullWidth
+                            id="interest"
+                            name="interest"
+                            size="small"
+                            value={values.interest}
+                            autoComplete="interest"
+                            inputProps={{ maxLength: 200 }}
+                            onChange={handleChangeForm("interest")}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <div className={classes.title}>About Me*</div>
+                          <TextField
+                            variant="outlined"
+                            fullWidth
+                            multiline
+                            rows={10}
+                            id="about_me"
+                            name="about_me"
+                            value={values.about_me}
+                            autoComplete="AboutMe"
+                            inputProps={{ maxLength: 2000 }}
+                            onChange={handleChangeForm("about_me")}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <div className={classes.title}>Native Language*</div>
+                          <Grid container className={classes.LanguageGrid}>
+                            <Grid item xs={6} sm={4}>
                               <Autocomplete
-                                value={study_lang}
                                 options={languages}
                                 getOptionLabel={(option) => option.lang}
                                 size="small"
+                                value={values.native_lang[0]}
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    label=""
+                                    variant="outlined"
+                                  />
+                                )}
+                                onChange={(event, value) =>
+                                  setValues({
+                                    ...values,
+                                    native_lang: [
+                                      {
+                                        ...values.native_lang[0],
+                                        lang: value != null ? value.lang : "",
+                                      },
+                                      ...values.native_lang.slice(1),
+                                    ],
+                                  })
+                                }
+                              />
+                            </Grid>
+                            <Grid container xs={6} sm={4}>
+                              <Button
+                                variant="contained"
+                                fullWidth
+                                style={{ marginLeft: 48 }}
+                                onClick={() => addNativeLanguage()}
+                              >
+                                Add
+                              </Button>
+                            </Grid>
+                          </Grid>
+                          {values.native_lang
+                            .slice(1)
+                            .map((native_lang, index) => (
+                              <Grid
+                                container
+                                key={index}
+                                className={classes.LanguageGrid}
+                              >
+                                <Grid item xs={6} sm={4}>
+                                  <Autocomplete
+                                    value={native_lang}
+                                    options={languages}
+                                    getOptionLabel={(option) => option.lang}
+                                    size="small"
+                                    renderInput={(params) => (
+                                      <TextField
+                                        {...params}
+                                        label=""
+                                        variant="outlined"
+                                      />
+                                    )}
+                                    onChange={(event, value) =>
+                                      setValues({
+                                        ...values,
+                                        native_lang: [
+                                          ...values.native_lang.slice(
+                                            0,
+                                            index + 1
+                                          ),
+                                          {
+                                            ...values.native_lang[index + 1],
+                                            lang:
+                                              value != null ? value.lang : "",
+                                          },
+                                          ...values.native_lang.slice(
+                                            index + 2
+                                          ),
+                                        ],
+                                      })
+                                    }
+                                  />
+                                </Grid>
+                                <Grid container xs={6} sm={4}>
+                                  <Button
+                                    variant="contained"
+                                    fullWidth
+                                    style={{ marginLeft: 48 }}
+                                    onClick={() =>
+                                      deleteNativeLanguage(index + 1)
+                                    }
+                                  >
+                                    Delete
+                                  </Button>
+                                </Grid>
+                              </Grid>
+                            ))}
+                        </Grid>
+                        <Grid item xs={12}>
+                          <div className={classes.title}>Study Language*</div>
+                          <Grid container className={classes.LanguageGrid}>
+                            <Grid item xs={6} sm={4}>
+                              <Autocomplete
+                                options={languages}
+                                getOptionLabel={(option) => option.lang}
+                                size="small"
+                                value={values.study_lang[0]}
                                 renderInput={(params) => (
                                   <TextField
                                     {...params}
@@ -716,23 +628,22 @@ function ProfilePage(props) {
                                   setValues({
                                     ...values,
                                     study_lang: [
-                                      ...values.study_lang.slice(0, index + 1),
                                       {
-                                        ...values.study_lang[index + 1],
+                                        ...values.study_lang[0],
                                         lang: value != null ? value.lang : "",
                                       },
-                                      ...values.study_lang.slice(index + 2),
+                                      ...values.study_lang.slice(1),
                                     ],
                                   })
                                 }
                               />
                             </Grid>
-                            <Grid item xs={4}>
+                            <Grid item xs={6} sm={4}>
                               <Autocomplete
-                                value={study_lang}
                                 options={languageProficiency}
                                 getOptionLabel={(option) => option.level}
                                 size="small"
+                                value={values.study_lang[0]}
                                 style={{ marginLeft: 50 }}
                                 renderInput={(params) => (
                                   <TextField
@@ -745,52 +656,148 @@ function ProfilePage(props) {
                                   setValues({
                                     ...values,
                                     study_lang: [
-                                      ...values.study_lang.slice(0, index + 1),
                                       {
-                                        ...values.study_lang[index + 1],
+                                        ...values.study_lang[0],
                                         level: value != null ? value.level : "",
                                       },
-                                      ...values.study_lang.slice(index + 2),
+                                      ...values.study_lang.slice(1),
                                     ],
                                   })
                                 }
                               />
                             </Grid>
-                            <Grid item xs={4}>
+                            <Grid
+                              container
+                              xs={12}
+                              sm={4}
+                              alignItems="center"
+                              justify="center"
+                            >
                               <Button
+                                className="buttonLang"
                                 variant="contained"
-                                style={{ marginLeft: 50, width: 70 }}
-                                onClick={() => deleteStudyLanguage(index + 1)}
+                                fullWidth
+                                onClick={() => addStudyLanguage()}
                               >
-                                Delete
+                                Add
                               </Button>
-                              {/* <IconButton
+                            </Grid>
+                          </Grid>
+                          {values.study_lang
+                            .slice(1)
+                            .map((study_lang, index) => (
+                              <Grid
+                                container
+                                key={index}
+                                className={classes.LanguageGrid}
+                              >
+                                <Grid item xs={6} sm={4}>
+                                  <Autocomplete
+                                    value={study_lang}
+                                    options={languages}
+                                    getOptionLabel={(option) => option.lang}
+                                    size="small"
+                                    renderInput={(params) => (
+                                      <TextField
+                                        {...params}
+                                        label=""
+                                        variant="outlined"
+                                      />
+                                    )}
+                                    onChange={(event, value) =>
+                                      setValues({
+                                        ...values,
+                                        study_lang: [
+                                          ...values.study_lang.slice(
+                                            0,
+                                            index + 1
+                                          ),
+                                          {
+                                            ...values.study_lang[index + 1],
+                                            lang:
+                                              value != null ? value.lang : "",
+                                          },
+                                          ...values.study_lang.slice(index + 2),
+                                        ],
+                                      })
+                                    }
+                                  />
+                                </Grid>
+                                <Grid item xs={6} sm={4}>
+                                  <Autocomplete
+                                    value={study_lang}
+                                    options={languageProficiency}
+                                    getOptionLabel={(option) => option.level}
+                                    size="small"
+                                    style={{ marginLeft: 50 }}
+                                    renderInput={(params) => (
+                                      <TextField
+                                        {...params}
+                                        label=""
+                                        variant="outlined"
+                                      />
+                                    )}
+                                    onChange={(event, value) =>
+                                      setValues({
+                                        ...values,
+                                        study_lang: [
+                                          ...values.study_lang.slice(
+                                            0,
+                                            index + 1
+                                          ),
+                                          {
+                                            ...values.study_lang[index + 1],
+                                            level:
+                                              value != null ? value.level : "",
+                                          },
+                                          ...values.study_lang.slice(index + 2),
+                                        ],
+                                      })
+                                    }
+                                  />
+                                </Grid>
+                                <Grid container xs={12} sm={4}>
+                                  <Button
+                                    className="buttonLang"
+                                    variant="contained"
+                                    fullWidth
+                                    alignItems="center"
+                                    justify="center"
+                                    // style={{ marginLeft: 50, width: 70 }}
+                                    onClick={() =>
+                                      deleteStudyLanguage(index + 1)
+                                    }
+                                  >
+                                    Delete
+                                  </Button>
+                                  {/* <IconButton
                                 variant="contained"
                                 aria-label="delete"
                                 onClick={() => deleteStudyLanguage(index + 1)}
                               >
                                 <DeleteIcon fontSize="large" />
                               </IconButton> */}
-                            </Grid>
-                          </Grid>
-                        ))}
+                                </Grid>
+                              </Grid>
+                            ))}
+                        </Grid>
                       </Grid>
-                    </Grid>
-                    <Button
-                      type="submit"
-                      fullWidth
-                      variant="contained"
-                      color="primary"
-                      className={classes.submit}
-                      onClick={handleSubmit}
-                      style={{ marginTop: 48, marginBottom: 32 }}
-                    >
-                      Save
-                    </Button>
-                  </form>
-                </Box>
-              </div>
-            </Paper>
+                      <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        color="primary"
+                        className={classes.submit}
+                        onClick={handleSubmit}
+                        style={{ marginTop: 48, marginBottom: 32 }}
+                      >
+                        Save
+                      </Button>
+                    </form>
+                  </Box>
+                </div>
+              </Paper>
+            </StylesProvider>
           </Container>
         </Box>
       </Box>

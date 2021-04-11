@@ -131,6 +131,9 @@ export default function SignIn() {
             localStorage.study_lang1 = "";
             localStorage.study_lang2 = "";
             localStorage.study_lang3 = "";
+            localStorage.study_lang_level1 = "";
+            localStorage.study_lang_level2 = "";
+            localStorage.study_lang_level3 = "";
           });
         history.push("/");
       }) // SUCCESS

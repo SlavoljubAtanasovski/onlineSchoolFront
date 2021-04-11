@@ -1,4 +1,6 @@
-export const LANG_NATIVE = "native";
-export const LANG_ADVANCED = "advanced";
-export const LANG_INTERMEDIATE = "intermediate";
-export const LANG_BEGINNER = "beginner";
+export const languageProficiency = [
+  { level: "Native" },
+  { level: "Advanced" },
+  { level: "Intermediate" },
+  { level: "Beginner" },
+];

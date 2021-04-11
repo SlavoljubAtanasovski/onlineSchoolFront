@@ -13,3 +13,9 @@ select[name="rcrs-region"] {
 .hide {
   display: none;
 }
+
+@media (max-width: 600px) {
+}
+
+@media (min-width: 600px) {
+}

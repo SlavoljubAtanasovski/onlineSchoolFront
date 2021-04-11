@@ -1,34 +1,32 @@
-import React, {useState} from 'react';
-import Avatar from '@material-ui/core/Avatar';
-import Button from '@material-ui/core/Button';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import TextField from '@material-ui/core/TextField';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
-import Link from '@material-ui/core/Link';
-import Grid from '@material-ui/core/Grid';
-import Box from '@material-ui/core/Box';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core/styles';
-import Container from '@material-ui/core/Container';
-import axios from 'axios';
-import {getCookie} from '../utils/csrf';
+import React from "react";
+import Avatar from "@material-ui/core/Avatar";
+import Button from "@material-ui/core/Button";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import TextField from "@material-ui/core/TextField";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import Checkbox from "@material-ui/core/Checkbox";
+import Link from "@material-ui/core/Link";
+import Grid from "@material-ui/core/Grid";
+import Box from "@material-ui/core/Box";
+import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
+import Typography from "@material-ui/core/Typography";
+import { makeStyles } from "@material-ui/core/styles";
+import Container from "@material-ui/core/Container";
+import axios from "axios";
 import { useHistory } from "react-router-dom";
 import { setAuthState } from "../store/actions";
 import * as AuthTypes from "../store/actions/auth_action";
-import {connect} from 'react-redux'
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from "react-redux";
 
 function Copyright() {
   return (
     <Typography variant="body2" color="textSecondary" align="center">
-      {'Copyright © '}
+      {"Copyright © "}
       <Link color="inherit" href="http://localhost:3000">
         Online Language School
-      </Link>{' '}
+      </Link>{" "}
       {new Date().getFullYear()}
-      {'.'}
+      {"."}
     </Typography>
   );
 }
@@ -36,16 +34,16 @@ function Copyright() {
 const useStyles = makeStyles((theme) => ({
   paper: {
     marginTop: theme.spacing(8),
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   },
   avatar: {
     margin: theme.spacing(1),
     backgroundColor: theme.palette.secondary.main,
   },
   form: {
-    width: '100%', // Fix IE 11 issue.
+    width: "100%", // Fix IE 11 issue.
     marginTop: theme.spacing(3),
   },
   submit: {
@@ -53,8 +51,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-axios.defaults.xsrfCookieName = 'csrftoken'
-axios.defaults.xsrfHeaderName = 'X-CSRFToken'
+axios.defaults.xsrfCookieName = "csrftoken";
+axios.defaults.xsrfHeaderName = "X-CSRFToken";
 
 export default function RegisterPage() {
   const classes = useStyles();
@@ -62,26 +60,25 @@ export default function RegisterPage() {
   const dispatch = useDispatch();
 
   const [values, setValues] = React.useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    password: '',
-    repassword: '',
+    first_name: "",
+    last_name: "",
+    email: "",
+    password: "",
+    repassword: "",
   });
   const [checkedTerm, setCheckedTerm] = React.useState(false);
-  const handleChangeForm = name => event => {
+  const handleChangeForm = (name) => (event) => {
     setValues({ ...values, [name]: event.target.value });
   };
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if(values.password !== values.repassword)
-    {
-        alert('password is different.');
-        return;
+    if (values.password !== values.repassword) {
+      alert("password is different.");
+      return;
     }
-    if(checkedTerm===false){
-        alert('You cannot register if don\'t agree our terms');
-        return;
+    if (checkedTerm === false) {
+      alert("You cannot register if don't agree our terms");
+      return;
     }
     // var csrftoken = getCookie('csrftoken');
     // fetch(url, {
@@ -97,27 +94,36 @@ export default function RegisterPage() {
     //    })
     //   }
     let data = {
-        first_name: values.first_name,
-        last_name: values.last_name,
-        email: values.email,
-        password: values.password
-      };
-    axios.post('/user/signup/', data)
-      .then( response => { 
+      first_name: values.first_name,
+      last_name: values.last_name,
+      email: values.email,
+      password: values.password,
+    };
+    axios
+      .post("/user/signup/", data)
+      .then((response) => {
         localStorage.email = data.email;
         localStorage.password = data.password;
         localStorage.first_name = data.first_name;
         localStorage.last_name = data.last_name;
         localStorage.authState = AuthTypes.AUTH_LOGIN_NO_EMAIL_CONFIRM;
-        dispatch(setAuthState(data.email, AuthTypes.AUTH_LOGIN_NO_EMAIL_CONFIRM, data.first_name, data.last_name));
-        history.push('/auth');
-        } ) // SUCCESS
-      .catch( response => { alert(response); } ); // ERROR
-    
-  }
+        dispatch(
+          setAuthState(
+            data.email,
+            AuthTypes.AUTH_LOGIN_NO_EMAIL_CONFIRM,
+            data.first_name,
+            data.last_name
+          )
+        );
+        history.push("/auth");
+      }) // SUCCESS
+      .catch((response) => {
+        alert(response);
+      }); // ERROR
+  };
   const handleChangeCheckbox = (e) => {
     setCheckedTerm(e.target.checked);
-  }
+  };
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -140,7 +146,7 @@ export default function RegisterPage() {
                 id="firstName"
                 label="First Name"
                 autoFocus
-                onChange={handleChangeForm('first_name')}
+                onChange={handleChangeForm("first_name")}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -152,7 +158,7 @@ export default function RegisterPage() {
                 label="Last Name"
                 name="last_name"
                 autoComplete="lname"
-                onChange={handleChangeForm('last_name')}
+                onChange={handleChangeForm("last_name")}
               />
             </Grid>
             <Grid item xs={12}>
@@ -164,7 +170,7 @@ export default function RegisterPage() {
                 label="Email Address"
                 name="email"
                 autoComplete="email"
-                onChange={handleChangeForm('email')}
+                onChange={handleChangeForm("email")}
               />
             </Grid>
             <Grid item xs={12}>
@@ -177,7 +183,7 @@ export default function RegisterPage() {
                 type="password"
                 id="password"
                 autoComplete="current-password"
-                onChange={handleChangeForm('password')}
+                onChange={handleChangeForm("password")}
               />
             </Grid>
             <Grid item xs={12}>
@@ -190,12 +196,18 @@ export default function RegisterPage() {
                 type="password"
                 id="repassword"
                 autoComplete="current-password"
-                onChange={handleChangeForm('repassword')}
+                onChange={handleChangeForm("repassword")}
               />
             </Grid>
             <Grid item xs={12}>
               <FormControlLabel
-                control={<Checkbox value="allowExtraEmails" color="primary" onChange = {handleChangeCheckbox}/>}
+                control={
+                  <Checkbox
+                    value="allowExtraEmails"
+                    color="primary"
+                    onChange={handleChangeCheckbox}
+                  />
+                }
                 label="I have read terms and conditions carefully and accept all your terms and conditions."
               />
             </Grid>
